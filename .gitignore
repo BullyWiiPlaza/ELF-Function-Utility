@@ -1,0 +1,14 @@
+#IntelliJ project folder
+/.idea
+
+#IntelliJ project file
+*.iml
+
+# Compiled files
+/target
+
+# ELF files
+*.elf
+
+# Persistent application settings
+config.properties
