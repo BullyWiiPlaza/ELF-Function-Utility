@@ -7,6 +7,6 @@ This allows you to compile any `C/C++` code and easily retrieve the machine code
 ## Where do I download a compiled version?
 [Here](ELF-Function-Utility.jar).
 
-## Credits  
-`Fredrik Fornwall` for the [ELF Parser library](https://github.com/fornwall/jelf)
+## Credits
+`Fredrik Fornwall` for the [ELF Parser library](https://github.com/fornwall/jelf)  
 `BullyWiiPlaza` for everything else
