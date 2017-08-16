@@ -8,5 +8,5 @@ This allows you to compile any `C/C++` code and easily retrieve the machine code
 [Here](ELF-Function-Utility.jar).
 
 ## Credits
-`Fredrik Fornwall` for the [ELF Parser library](https://github.com/fornwall/jelf)  
+`Fredrik Fornwall` for the [ELF Parser library](https://github.com/fornwall/jelf)<br/>
 `BullyWiiPlaza` for everything else

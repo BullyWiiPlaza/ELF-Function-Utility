@@ -25,7 +25,7 @@ public class ELFFunctionsTableManager
 
 	public void configure()
 	{
-		String[] columnHeaderNames = new String[]{"Name", "Offset", "Size"};
+		String[] columnHeaderNames = new String[]{"Function Name", "File Offset", "Code Size"};
 		JTableUtilities.configureTable(table, columnHeaderNames);
 	}
 
@@ -66,6 +66,7 @@ public class ELFFunctionsTableManager
 	public void removeAllRows()
 	{
 		JTableUtilities.deleteAllRows(table);
+		elfFunctions.clear();
 	}
 
 	public boolean isTableEmpty()
