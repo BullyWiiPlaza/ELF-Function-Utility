@@ -1,5 +1,6 @@
 package com.bullywiihacks.elf.utility.elf;
 
+import com.bullywiihacks.elf.utility.assembly.PowerPCAssembly;
 import com.bullywiihacks.elf.utility.utilities.Conversions;
 import net.fornwall.jelf.ElfFile;
 import net.fornwall.jelf.ElfSection;

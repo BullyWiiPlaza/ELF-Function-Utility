@@ -1,4 +1,4 @@
-package com.bullywiihacks.elf.utility.elf;
+package com.bullywiihacks.elf.utility.assembly;
 
 public class PowerPCAssembly
 {

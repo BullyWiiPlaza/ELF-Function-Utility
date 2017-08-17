@@ -1,4 +1,7 @@
-package com.bullywiihacks.elf.utility.elf;
+package com.bullywiihacks.elf.utility.assembly;
+
+import com.bullywiihacks.elf.utility.elf.ELFFunction;
+import com.bullywiihacks.elf.utility.elf.ELFWrapper;
 
 import java.io.IOException;
 import java.util.List;

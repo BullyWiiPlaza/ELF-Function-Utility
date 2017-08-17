@@ -1,7 +1,7 @@
 package com.bullywiihacks.elf.utility.graphical_user_interface;
 
-import com.bullywiihacks.elf.utility.elf.AssemblyModification;
-import com.bullywiihacks.elf.utility.elf.AssemblyValidator;
+import com.bullywiihacks.elf.utility.assembly.AssemblyModification;
+import com.bullywiihacks.elf.utility.assembly.AssemblyValidator;
 import com.bullywiihacks.elf.utility.utilities.Conversions;
 import com.bullywiihacks.elf.utility.elf.ELFFunction;
 import com.bullywiihacks.elf.utility.elf.ELFWrapper;
