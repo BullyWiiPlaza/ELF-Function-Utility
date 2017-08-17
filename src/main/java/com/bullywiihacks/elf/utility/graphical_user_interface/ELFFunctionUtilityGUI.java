@@ -1,5 +1,7 @@
 package com.bullywiihacks.elf.utility.graphical_user_interface;
 
+import com.bullywiihacks.elf.utility.elf.AssemblyModification;
+import com.bullywiihacks.elf.utility.elf.AssemblyValidator;
 import com.bullywiihacks.elf.utility.utilities.Conversions;
 import com.bullywiihacks.elf.utility.elf.ELFFunction;
 import com.bullywiihacks.elf.utility.elf.ELFWrapper;
@@ -133,14 +135,26 @@ public class ELFFunctionUtilityGUI extends JFrame
 			{
 				ELFFunction elfFunction = elfFunctionsTableManager.getSelectedElement();
 				byte[] assembly = elfFunction.getAssembly();
-				String hexadecimal = Conversions.toHexadecimal(assembly);
-				hexadecimal = hexadecimal.toUpperCase();
-				SystemClipboard.copy(hexadecimal);
-				Toolkit.getDefaultToolkit().beep();
-				JOptionPane.showMessageDialog(this,
-						"The machine code of " + elfFunction.getName() + "() has been copied to the clipboard!",
-						"Success",
-						JOptionPane.INFORMATION_MESSAGE);
+				assembly = AssemblyModification.forceCorrectSize(assembly);
+
+				try
+				{
+					AssemblyValidator.validate(assembly, elfFunction, elfFunctionsTableManager.getFunctions());
+					String hexadecimal = Conversions.toHexadecimal(assembly);
+					hexadecimal = hexadecimal.toUpperCase();
+					SystemClipboard.copy(hexadecimal);
+					Toolkit.getDefaultToolkit().beep();
+					JOptionPane.showMessageDialog(this,
+							"The machine code of " + elfFunction.getName() + "() has been copied to the clipboard!",
+							"Success",
+							JOptionPane.INFORMATION_MESSAGE);
+				} catch (IllegalArgumentException exception)
+				{
+					JOptionPane.showMessageDialog(this,
+							exception.getMessage(),
+							"Bad Function",
+							JOptionPane.WARNING_MESSAGE);
+				}
 			} catch (Exception exception)
 			{
 				exception.printStackTrace();

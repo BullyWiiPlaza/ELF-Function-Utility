@@ -93,4 +93,9 @@ public class ELFFunctionsTableManager
 	{
 		return table.getRowCount();
 	}
+
+	public List<ELFFunction> getFunctions()
+	{
+		return elfFunctions;
+	}
 }

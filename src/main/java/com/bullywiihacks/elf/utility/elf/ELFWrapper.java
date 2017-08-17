@@ -1,5 +1,6 @@
 package com.bullywiihacks.elf.utility.elf;
 
+import com.bullywiihacks.elf.utility.utilities.Conversions;
 import net.fornwall.jelf.ElfFile;
 import net.fornwall.jelf.ElfSection;
 import net.fornwall.jelf.ElfSymbol;
@@ -7,6 +8,7 @@ import net.fornwall.jelf.ElfSymbol;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,5 +48,31 @@ public class ELFWrapper
 		Collections.sort(elfFunctions);
 
 		return elfFunctions;
+	}
+
+	public static ELFFunction getCalledFunction(List<ELFFunction> elfFunctions,
+	                                            byte[] assembly,
+	                                            int assemblyIndex) throws IOException
+	{
+		ELFFunction callerFunction = ELFFunction.findByAssembly(elfFunctions, assembly);
+		long calledFunctionOffset = getCalledFunctionOffset(assembly, assemblyIndex, callerFunction);
+
+		return ELFFunction.findByCalledFunctionOffset(elfFunctions, calledFunctionOffset);
+	}
+
+	private static long getCalledFunctionOffset(byte[] assembly, int assemblyIndex, ELFFunction callerFunction)
+	{
+		int branchOffset = getBranchOffset(assembly, assemblyIndex);
+		long callerFunctionOffset = callerFunction.getOffsetLong();
+
+		return callerFunctionOffset + branchOffset + assemblyIndex - 1;
+	}
+
+	private static int getBranchOffset(byte[] assembly, int assemblyIndex)
+	{
+		int startingIndex = assemblyIndex + 1;
+		byte[] branchAndLinkOffset = Arrays.copyOfRange(assembly, startingIndex, startingIndex + PowerPCAssembly.INSTRUCTION_BYTES_LENGTH - 1);
+
+		return Conversions.toInteger(branchAndLinkOffset);
 	}
 }

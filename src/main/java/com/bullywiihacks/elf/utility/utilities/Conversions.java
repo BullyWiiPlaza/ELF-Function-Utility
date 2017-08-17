@@ -1,5 +1,7 @@
 package com.bullywiihacks.elf.utility.utilities;
 
+import java.math.BigInteger;
+
 public class Conversions
 {
 	public static String toHexadecimal(byte[] data)
@@ -24,5 +26,27 @@ public class Conversions
 		}
 
 		return buf.toString();
+	}
+
+	public static int toSigned24Bit(int value)
+	{
+		return toSigned(value, 24);
+	}
+
+	private static int toSigned(int value, int bits)
+	{
+		int maximumPositiveValue = (int) Math.pow(2, bits - 1);
+
+		if (value <= maximumPositiveValue)
+		{
+			return value;
+		}
+
+		return value * (-1);
+	}
+
+	public static int toInteger(byte[] array)
+	{
+		return new BigInteger(array).intValue();
 	}
 }
