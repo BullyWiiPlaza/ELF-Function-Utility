@@ -30,7 +30,7 @@ public class ELFWrapper
 		short architecture = elfFile.arch;
 
 		// http://www.sco.com/developers/gabi/latest/ch4.eheader.html
-		return architecture == 0x20 || architecture == 0x21;
+		return architecture == 20 || architecture == 21;
 	}
 
 	public List<ELFFunction> parseELFFunctions() throws IOException
