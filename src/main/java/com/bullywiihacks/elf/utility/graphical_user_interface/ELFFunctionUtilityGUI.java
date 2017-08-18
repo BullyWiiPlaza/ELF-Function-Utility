@@ -30,6 +30,8 @@ public class ELFFunctionUtilityGUI extends JFrame
 	private ELFFunctionsTableManager elfFunctionsTableManager;
 	private SimpleProperties simpleProperties;
 
+	private ELFWrapper elfWrapper;
+
 	public ELFFunctionUtilityGUI()
 	{
 		setFrameProperties();
@@ -135,11 +137,19 @@ public class ELFFunctionUtilityGUI extends JFrame
 			{
 				ELFFunction elfFunction = elfFunctionsTableManager.getSelectedElement();
 				byte[] assembly = elfFunction.getAssembly();
-				assembly = AssemblyModification.forceCorrectSize(assembly);
+
+				if (elfWrapper.isPowerPC())
+				{
+					assembly = AssemblyModification.forceCorrectSize(assembly);
+				}
 
 				try
 				{
-					AssemblyValidator.validate(assembly, elfFunction, elfFunctionsTableManager.getFunctions());
+					if (elfWrapper.isPowerPC())
+					{
+						AssemblyValidator.validate(assembly, elfFunction, elfFunctionsTableManager.getFunctions());
+					}
+
 					String hexadecimal = Conversions.toHexadecimal(assembly);
 					hexadecimal = hexadecimal.toUpperCase();
 					SystemClipboard.copy(hexadecimal);
@@ -217,7 +227,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 								if (elfFunctionsTableManager.isTableEmpty())
 								{
 									String executableFilePath = executableFilePathField.getText();
-									ELFWrapper elfWrapper = new ELFWrapper(executableFilePath);
+									elfWrapper = new ELFWrapper(executableFilePath);
 									elfFunctions = elfWrapper.parseELFFunctions();
 								}
 							} catch (FileNotFoundException ignored)

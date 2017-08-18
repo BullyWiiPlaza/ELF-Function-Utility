@@ -25,6 +25,14 @@ public class ELFWrapper
 		this.elfFile = ElfFile.fromFile(file);
 	}
 
+	public boolean isPowerPC()
+	{
+		short architecture = elfFile.arch;
+
+		// http://www.sco.com/developers/gabi/latest/ch4.eheader.html
+		return architecture == 0x20 || architecture == 0x21;
+	}
+
 	public List<ELFFunction> parseELFFunctions() throws IOException
 	{
 		List<ELFFunction> elfFunctions = new ArrayList<>();
