@@ -6,6 +6,7 @@ import com.bullywiihacks.elf.utility.utilities.Conversions;
 import com.bullywiihacks.elf.utility.elf.ELFFunction;
 import com.bullywiihacks.elf.utility.elf.ELFWrapper;
 import com.bullywiihacks.elf.utility.graphical_user_interface.utilities.*;
+import net.fornwall.jelf.ElfException;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -13,6 +14,9 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ELFFunctionUtilityGUI extends JFrame
@@ -27,13 +31,16 @@ public class ELFFunctionUtilityGUI extends JFrame
 
 	private SingleFileChooser singleFileChooser;
 
+	private int selectedFunctionIndex;
 	private ELFFunctionsTableManager elfFunctionsTableManager;
 	private SimpleProperties simpleProperties;
 
 	private ELFWrapper elfWrapper;
+	private List<Thread> fileWatchers;
 
 	public ELFFunctionUtilityGUI()
 	{
+		fileWatchers = new ArrayList<>();
 		setFrameProperties();
 		addExecutableFilePathFieldListener();
 		addBrowseELFFileButtonListener();
@@ -55,21 +62,67 @@ public class ELFFunctionUtilityGUI extends JFrame
 			@Override
 			public void insertUpdate(DocumentEvent documentEvent)
 			{
-				elfFunctionsTableManager.removeAllRows();
+				onExecutableFilePathFieldModified();
 			}
 
 			@Override
 			public void removeUpdate(DocumentEvent documentEvent)
 			{
-				elfFunctionsTableManager.removeAllRows();
+				onExecutableFilePathFieldModified();
 			}
 
 			@Override
 			public void changedUpdate(DocumentEvent documentEvent)
 			{
-				elfFunctionsTableManager.removeAllRows();
+				onExecutableFilePathFieldModified();
 			}
 		});
+	}
+
+	private void onExecutableFilePathFieldModified()
+	{
+		selectedFunctionIndex = elfFunctionsTableManager.getSelectedIndex();
+		elfFunctionsTableManager.removeAllRows();
+
+		String executableFilePath = executableFilePathField.getText();
+		if (Files.isRegularFile(Paths.get(executableFilePath)))
+		{
+			Thread thread = new Thread(() ->
+			{
+				try
+				{
+					String watchFile = executableFilePathField.getText();
+					FileWatcher fileWatcher = new MyFileWatcher(watchFile);
+					System.out.println("Watching " + executableFilePathField.getText() + "...");
+					fileWatcher.watchFile();
+				} catch (Exception exception)
+				{
+					exception.printStackTrace();
+				}
+			});
+
+			thread.setName("Executable File Watcher");
+			fileWatchers.add(thread);
+
+			if (fileWatchers.size() == 1)
+			{
+				thread.start();
+			}
+		}
+	}
+
+	public class MyFileWatcher extends FileWatcher
+	{
+		public MyFileWatcher(String watchFile)
+		{
+			super(watchFile);
+		}
+
+		@Override
+		public void onModified()
+		{
+			onExecutableFilePathFieldModified();
+		}
 	}
 
 	private void handlePersistentSettings()
@@ -177,7 +230,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 		resetButton.addActionListener(actionEvent ->
 		{
 			executableFilePathField.setText("");
-			elfFunctionsTableManager.removeAllRows();
+			onExecutableFilePathFieldModified();
 		});
 	}
 
@@ -209,70 +262,90 @@ public class ELFFunctionUtilityGUI extends JFrame
 
 			while (isShowing())
 			{
-				boolean isValidFilePath = singleFileChooser.isValidFilePath();
-
-				SwingUtilities.invokeLater(() ->
-				{
-					copyMachineCodeButton.setEnabled(isValidFilePath);
-
-					new SwingWorker<String, String>()
-					{
-						List<ELFFunction> elfFunctions;
-
-						@Override
-						protected String doInBackground() throws Exception
-						{
-							try
-							{
-								if (elfFunctionsTableManager.isTableEmpty())
-								{
-									String executableFilePath = executableFilePathField.getText();
-									elfWrapper = new ELFWrapper(executableFilePath);
-									elfFunctions = elfWrapper.parseELFFunctions();
-								}
-							} catch (FileNotFoundException ignored)
-							{
-
-							} catch (Exception exception)
-							{
-								exception.printStackTrace();
-							}
-
-							return null;
-						}
-
-						@Override
-						protected void done()
-						{
-							if (elfFunctions != null)
-							{
-								if (elfFunctionsTableManager.isTableEmpty())
-								{
-									elfFunctions.remove(elfFunctions.size() - 1);
-									for (ELFFunction elfFunction : elfFunctions)
-									{
-										elfFunctionsTableManager.addRow(elfFunction);
-									}
-
-									elfFunctionsTableManager.selectFirstRow();
-								}
-							}
-						}
-					}.execute();
-				});
-
-				try
-				{
-					Thread.sleep(10);
-				} catch (InterruptedException exception)
-				{
-					exception.printStackTrace();
-				}
+				populateFunctions();
 			}
 		});
 
 		thread.setName("Button Availability Monitoring");
 		thread.start();
+	}
+
+	private void populateFunctions()
+	{
+		boolean isValidFilePath = singleFileChooser.isValidFilePath();
+
+		SwingUtilities.invokeLater(() ->
+		{
+			copyMachineCodeButton.setEnabled(isValidFilePath);
+
+			new SwingWorker<String, String>()
+			{
+				List<ELFFunction> elfFunctions;
+
+				@Override
+				protected String doInBackground() throws Exception
+				{
+					try
+					{
+						if (elfFunctionsTableManager.isTableEmpty())
+						{
+							String executableFilePath;
+
+							try
+							{
+								executableFilePath = executableFilePathField.getText();
+								elfWrapper = new ELFWrapper(executableFilePath);
+								elfFunctions = elfWrapper.parseELFFunctions();
+							} catch (ElfException ignored)
+							{
+
+							}
+						}
+					} catch (FileNotFoundException ignored)
+					{
+
+					} catch (Exception exception)
+					{
+						exception.printStackTrace();
+					}
+
+					return null;
+				}
+
+				@Override
+				protected void done()
+				{
+					if (elfFunctions != null)
+					{
+						if (elfFunctionsTableManager.isTableEmpty())
+						{
+							elfFunctions.remove(elfFunctions.size() - 1);
+							for (ELFFunction elfFunction : elfFunctions)
+							{
+								elfFunctionsTableManager.addRow(elfFunction);
+							}
+
+							if (selectedFunctionIndex != -1
+									&& selectedFunctionIndex < elfFunctionsTableManager.getRowCount())
+							{
+								elfFunctionsTableManager.setSelectedRow(selectedFunctionIndex);
+							} else
+							{
+								elfFunctionsTableManager.selectFirstRow();
+							}
+						}
+					}
+				}
+			}.execute();
+		});
+
+		try
+		{
+			Thread.sleep(10);
+		} catch (InterruptedException exception)
+		{
+			exception.printStackTrace();
+		}
 	}
 
 	private void addBrowseELFFileButtonListener()

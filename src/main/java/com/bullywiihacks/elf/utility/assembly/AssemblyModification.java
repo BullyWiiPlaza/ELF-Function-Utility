@@ -6,7 +6,6 @@ import java.util.Arrays;
 
 public class AssemblyModification
 {
-
 	public static byte[] process(byte[] assembly) throws IOException
 	{
 		assembly = stripBlr(assembly);
@@ -56,8 +55,7 @@ public class AssemblyModification
 		return outputStream.toByteArray();
 	}
 
-
-	public static byte[] stripStackFrame(byte[] assembly)
+	private static byte[] stripStackFrame(byte[] assembly)
 	{
 		return assembly;
 	}
