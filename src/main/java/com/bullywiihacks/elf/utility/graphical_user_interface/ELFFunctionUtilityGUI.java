@@ -1,23 +1,33 @@
 package com.bullywiihacks.elf.utility.graphical_user_interface;
 
-import com.bullywiihacks.elf.utility.assembly.AssemblyModification;
 import com.bullywiihacks.elf.utility.assembly.AssemblyValidator;
-import com.bullywiihacks.elf.utility.utilities.Conversions;
 import com.bullywiihacks.elf.utility.elf.ELFFunction;
 import com.bullywiihacks.elf.utility.elf.ELFWrapper;
-import com.bullywiihacks.elf.utility.graphical_user_interface.utilities.*;
+import com.bullywiihacks.elf.utility.graphical_user_interface.utilities.FileWatcher;
+import com.bullywiihacks.elf.utility.graphical_user_interface.utilities.SimpleProperties;
+import com.bullywiihacks.elf.utility.graphical_user_interface.utilities.SingleFileChooser;
 import net.fornwall.jelf.ElfException;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.io.FileNotFoundException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.bullywiihacks.elf.utility.assembly.AssemblyModification.forceCorrectSize;
+import static com.bullywiihacks.elf.utility.graphical_user_interface.utilities.PersistentSetting.*;
+import static com.bullywiihacks.elf.utility.graphical_user_interface.utilities.SystemClipboard.copy;
+import static com.bullywiihacks.elf.utility.graphical_user_interface.utilities.WindowUtilities.setWindowIconImage;
+import static com.bullywiihacks.elf.utility.utilities.Conversions.toHexadecimal;
+import static java.awt.Toolkit.getDefaultToolkit;
+import static java.lang.Thread.sleep;
+import static java.nio.file.Files.isRegularFile;
+import static javax.swing.JOptionPane.*;
+import static javax.swing.SwingUtilities.invokeLater;
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 
 public class ELFFunctionUtilityGUI extends JFrame
 {
@@ -85,7 +95,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 		elfFunctionsTableManager.removeAllRows();
 
 		String executableFilePath = executableFilePathField.getText();
-		if (Files.isRegularFile(Paths.get(executableFilePath)))
+		if (isRegularFile(Paths.get(executableFilePath)))
 		{
 			Thread thread = new Thread(() ->
 			{
@@ -113,7 +123,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 
 	public class MyFileWatcher extends FileWatcher
 	{
-		public MyFileWatcher(String watchFile)
+		MyFileWatcher(String watchFile)
 		{
 			super(watchFile);
 		}
@@ -128,20 +138,20 @@ public class ELFFunctionUtilityGUI extends JFrame
 	private void handlePersistentSettings()
 	{
 		simpleProperties = new SimpleProperties();
-		PersistentSetting.validateUniqueness();
+		validateUniqueness();
 		restoreSettings();
 		addSettingsBackupShutdownHook();
 	}
 
 	private void restoreSettings()
 	{
-		String executableFilePath = simpleProperties.get(PersistentSetting.EXECUTABLE_FILE_PATH.toString());
+		String executableFilePath = simpleProperties.get(EXECUTABLE_FILE_PATH.toString());
 		if (executableFilePath != null)
 		{
 			executableFilePathField.setText(executableFilePath);
 		}
 
-		String selectedRowIndex = simpleProperties.get(PersistentSetting.SELECTED_ROW_INDEX.toString());
+		String selectedRowIndex = simpleProperties.get(SELECTED_ROW_INDEX.toString());
 		if (selectedRowIndex != null)
 		{
 			Thread thread = new Thread(() ->
@@ -150,7 +160,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 				{
 					try
 					{
-						Thread.sleep(10);
+						sleep(10);
 					} catch (InterruptedException exception)
 					{
 						exception.printStackTrace();
@@ -160,7 +170,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 				int integerRowIndex = Integer.parseInt(selectedRowIndex);
 				if (integerRowIndex < elfFunctionsTableManager.getRowCount() - 1)
 				{
-					SwingUtilities.invokeLater(() -> elfFunctionsTableManager.setSelectedRow(integerRowIndex));
+					invokeLater(() -> elfFunctionsTableManager.setSelectedRow(integerRowIndex));
 				}
 			});
 
@@ -175,9 +185,9 @@ public class ELFFunctionUtilityGUI extends JFrame
 		runtime.addShutdownHook(new Thread(() ->
 		{
 			String executableFilePath = executableFilePathField.getText();
-			simpleProperties.put(PersistentSetting.EXECUTABLE_FILE_PATH.toString(), executableFilePath);
+			simpleProperties.put(EXECUTABLE_FILE_PATH.toString(), executableFilePath);
 			int index = elfFunctionsTableManager.getSelectedIndex();
-			simpleProperties.put(PersistentSetting.SELECTED_ROW_INDEX.toString(), index + "");
+			simpleProperties.put(SELECTED_ROW_INDEX.toString(), index + "");
 			simpleProperties.writeToFile();
 		}));
 	}
@@ -193,34 +203,40 @@ public class ELFFunctionUtilityGUI extends JFrame
 
 				if (elfWrapper.isPowerPC())
 				{
-					assembly = AssemblyModification.forceCorrectSize(assembly);
+					assembly = forceCorrectSize(assembly);
 				}
 
 				try
 				{
 					if (elfWrapper.isPowerPC())
 					{
-						AssemblyValidator.validate(assembly, elfFunction, elfFunctionsTableManager.getFunctions());
+						AssemblyValidator.validate(assembly,
+								elfFunction, elfFunctionsTableManager.getFunctions());
 					}
 
-					String hexadecimal = Conversions.toHexadecimal(assembly);
+					String hexadecimal = toHexadecimal(assembly);
 					hexadecimal = hexadecimal.toUpperCase();
-					SystemClipboard.copy(hexadecimal);
-					Toolkit.getDefaultToolkit().beep();
-					JOptionPane.showMessageDialog(this,
-							"The machine code of " + elfFunction.getName() + "() has been copied to the clipboard!",
+					copy(hexadecimal);
+					getDefaultToolkit().beep();
+					showMessageDialog(this,
+							"The machine code of "
+									+ elfFunction.getName()
+									+ "() has been copied to the clipboard!",
 							"Success",
-							JOptionPane.INFORMATION_MESSAGE);
+							INFORMATION_MESSAGE);
 				} catch (IllegalArgumentException exception)
 				{
-					JOptionPane.showMessageDialog(this,
+					showMessageDialog(this,
 							exception.getMessage(),
 							"Bad Function",
-							JOptionPane.WARNING_MESSAGE);
+							WARNING_MESSAGE);
 				}
 			} catch (Exception exception)
 			{
 				exception.printStackTrace();
+				showMessageDialog(this,
+						getStackTrace(exception),
+						"Error", ERROR_MESSAGE);
 			}
 		});
 	}
@@ -237,12 +253,12 @@ public class ELFFunctionUtilityGUI extends JFrame
 	private void addAboutButtonListener()
 	{
 		aboutButton.addActionListener(actionEvent ->
-				JOptionPane.showMessageDialog(this,
+				showMessageDialog(this,
 						"This application allows you to list functions from an ELF\n" +
 								"and copy their executable code to the clipboard.\n\n" +
 								"Copyright 2017 \u00A9 BullyWiiPlaza Productions",
 						aboutButton.getText(),
-						JOptionPane.INFORMATION_MESSAGE));
+						INFORMATION_MESSAGE));
 	}
 
 	private void startButtonAvailabilityMonitoring()
@@ -253,7 +269,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 			{
 				try
 				{
-					Thread.sleep(10);
+					sleep(10);
 				} catch (InterruptedException exception)
 				{
 					exception.printStackTrace();
@@ -274,7 +290,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 	{
 		boolean isValidFilePath = singleFileChooser.isValidFilePath();
 
-		SwingUtilities.invokeLater(() ->
+		invokeLater(() ->
 		{
 			copyMachineCodeButton.setEnabled(isValidFilePath);
 
@@ -283,7 +299,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 				List<ELFFunction> elfFunctions;
 
 				@Override
-				protected String doInBackground() throws Exception
+				protected String doInBackground()
 				{
 					try
 					{
@@ -341,7 +357,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 
 		try
 		{
-			Thread.sleep(10);
+			sleep(10);
 		} catch (InterruptedException exception)
 		{
 			exception.printStackTrace();
@@ -366,7 +382,7 @@ public class ELFFunctionUtilityGUI extends JFrame
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setTitle("ELF Functions Utility");
 		setLocationRelativeTo(null);
-		WindowUtilities.setIconImage(this);
+		setWindowIconImage(this);
 		setSize(600, 400);
 	}
 }

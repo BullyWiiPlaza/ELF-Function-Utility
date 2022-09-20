@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public class WindowUtilities
 {
-	public static void setIconImage(Window window)
+	public static void setWindowIconImage(Window window)
 	{
 		window.setIconImage(Toolkit.getDefaultToolkit().getImage(WindowUtilities.class.getResource("/Icon.png")));
 	}
